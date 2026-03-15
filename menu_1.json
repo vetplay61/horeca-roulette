@@ -1,5 +1,11 @@
-[
-    { "src": "1.png", "name": "Том ЯМ", "type": "base" },
+{
+  "schedule": {
+    "start": "10:00",
+    "end": "23:00",
+    "tz_offset": 3
+  },
+  "menu": [
+     { "src": "1.png", "name": "Том ЯМ", "type": "base" },
     { "src": "2.png", "name": "Ролл Филадельфия", "type": "base" },
     { "src": "3.png", "name": "Димсамы", "type": "base" },
     { "src": "set.png", "name": "Сет роллов", "type": "margin" },
@@ -26,4 +32,5 @@
     { "src": "sosed.png", "name": "Угощаешь соседа", "type": "fun" },
     { "src": "vubor.png", "name": "Выбор официанта", "type": "fun" },
     { "src": "joker.png", "name": "ДЖОКЕР: Спец-подача!", "type": "joker" }
-]
+  ]
+}
