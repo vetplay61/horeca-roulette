@@ -49,58 +49,75 @@
     </div>
 
     <script>
-       const tg = window.Telegram.WebApp;
+        const tg = window.Telegram.WebApp;
         tg.expand();
 
+        // Инициализация звуков
         const spinSound = new Audio('spin.mp3');
         const winSound = new Audio('win.mp3');
         spinSound.loop = true;
         spinSound.volume = 0.6;
         winSound.volume = 1.0;
 
-        // 1. Читаем ID ресторана из ссылки (например: ?rest_id=1)
+        // Получаем ID заведения из ссылки (по умолчанию 1)
         const urlParams = new URLSearchParams(window.location.search);
-        // Если ID не передали, по умолчанию грузим заведение "1"
-        const restId = urlParams.get('rest_id') || '1'; 
+        const restId = urlParams.get('rest_id') || '1';
 
-        // 2. Скачиваем нужный JSON-файл с меню
+        // Загружаем JSON с меню
         fetch(`menu_${restId}.json`)
             .then(response => {
                 if (!response.ok) throw new Error("Меню не найдено");
-                return response.json(); // Превращаем текст в массив
+                return response.json();
             })
             .then(myItems => {
-                // ВЕСЬ КОД РУЛЕТКИ ТЕПЕРЬ ВНУТРИ ЭТОГО БЛОКА, 
-                // ОН ЗАПУСТИТСЯ ТОЛЬКО ПОСЛЕ ЗАГРУЗКИ ДАННЫХ
-
+                
+                // Фильтруем по категориям
                 const margins = myItems.filter(item => item.type === "margin");
                 const bases = myItems.filter(item => item.type === "base");
                 const funs = myItems.filter(item => item.type === "fun");
                 const jokers = myItems.filter(item => item.type === "joker");
-                const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+                // Функция строгого перебора карточек (без рандома)
+                const getNext = (arr, counter) => {
+                    if (arr.length === 0) return myItems[0]; // Защита от пустой категории
+                    const item = arr[counter.val % arr.length];
+                    counter.val++;
+                    return item;
+                };
+
+                let mCount = { val: 0 };
+                let bCount = { val: 0 };
+                let fCount = { val: 0 };
 
                 let frames = [];
-                for(let i=0; i<100; i++) frames.push(margins.length > 0 ? getRandom(margins) : myItems[0]);
-                for(let i=0; i<70; i++) frames.push(bases.length > 0 ? getRandom(bases) : myItems[0]);
-                for(let i=0; i<29; i++) frames.push(funs.length > 0 ? getRandom(funs) : myItems[0]);
-                frames.push(jokers.length > 0 ? jokers[0] : myItems[0]);
 
-                frames.sort(() => Math.random() - 0.5);
-
-                for (let i = 1; i < frames.length - 1; i++) {
-                    if (frames[i].src === frames[i - 1].src) {
-                        for (let j = i + 1; j < frames.length; j++) {
-                            if (frames[j].src !== frames[i].src && frames[j].src !== frames[i - 1].src) {
-                                let temp = frames[i]; frames[i] = frames[j]; frames[j] = temp; break;
-                            }
+                // Жесткая сборка 200 кадров (Идеальная зебра)
+                for (let i = 0; i < 200; i++) {
+                    // 1. Джокер на 125-м кадре (18.7 сек)
+                    if (i === 125 && jokers.length > 0) {
+                        frames.push(jokers[0]);
+                        continue;
+                    }
+                    // 2. Высокая маржа: все четные кадры
+                    if (i % 2 === 0) {
+                        frames.push(getNext(margins, mCount));
+                    } 
+                    // 3. База и Фан: нечетные кадры
+                    else {
+                        // Фан каждый 3-й нечетный кадр
+                        if (i % 6 === 3) {
+                            frames.push(getNext(funs, fCount));
+                        } else {
+                            // Обычная база
+                            frames.push(getNext(bases, bCount));
                         }
                     }
                 }
 
+                // Прелоадер картинок
                 let loadedImagesCount = 0;
                 const totalImages = myItems.length;
 
-                // Прелоадер картинок
                 myItems.forEach((item) => {
                     const img = new Image();
                     img.src = item.src;
@@ -133,6 +150,7 @@
                     startScreen.style.display = 'none';
                     container.style.display = 'block';
                     
+                    // Прогрев звуков
                     spinSound.play().catch(()=>{}); spinSound.pause(); spinSound.currentTime = 0;
                     winSound.play().catch(()=>{}); winSound.pause(); winSound.currentTime = 0;
 
@@ -145,6 +163,7 @@
                     if (!isRunning) return;
                     imageElement.src = frames[currentIndex].src;
                     currentIndex++;
+                    // Зацикливаем видео, если гость не нажал до конца
                     if (currentIndex >= frames.length) currentIndex = 0;
                 }
 
@@ -153,12 +172,14 @@
                     
                     isRunning = false;
                     clearInterval(intervalId);
+                    
                     spinSound.pause();
                     winSound.play().catch(()=>{});
                     
                     const winner = frames[currentIndex === 0 ? frames.length - 1 : currentIndex - 1];
                     tg.HapticFeedback.notificationOccurred('success');
 
+                    // Отправляем результат в Python (с паузой для победного звука)
                     setTimeout(() => {
                         tg.sendData(JSON.stringify({
                             result_name: winner.name,
@@ -169,7 +190,6 @@
                 });
             })
             .catch(error => {
-                // Если передали неверный ID или файл не найден
                 document.getElementById('loader').innerHTML = "Ошибка загрузки меню 😔<br>Проверьте ссылку.";
             });
     </script>
