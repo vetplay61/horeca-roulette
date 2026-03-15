@@ -24,13 +24,13 @@
             width: 100%;
             height: 100%;
             position: relative;
-            display: none; /* Скрыто до конца загрузки */
+            display: none;
         }
-        /* Картинка на 100% экрана */
         #roulette-image {
             width: 100%;
             height: 100%;
-            object-fit: cover; 
+            /* ИСПРАВЛЕНИЕ: contain покажет картинку целиком без обрезки */
+            object-fit: contain; 
             position: absolute;
             top: 0;
             left: 0;
@@ -54,45 +54,53 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Массив данных остается: скрипту нужны name и type для отправки в бота
         const myItems = [
             { src: "1.png", name: "Том ЯМ", type: "base" },
             { src: "2.png", name: "Ролл Филадельфия", type: "base" },
             { src: "3.png", name: "Димсамы", type: "base" },
-{ src: "set.png", name: "Сет роллов", type: "margin" },
+            { src: "set.png", name: "Сет роллов", type: "margin" },
             { src: "4.png", name: "Пад Тай", type: "base" },
             { src: "5.png", name: "Фо Бо", type: "base" },
-	    { src: "6.png", name: "Битые огурцы", type: "base" },
-{ src: "7.png", name: "Утка по пекински", type: "base" },
-{ src: "8.png", name: "Поке с лососем", type: "base" },
-{ src: "9.png", name: "Спринг Роллы", type: "base" },
-{ src: "10.png", name: "Лапша Удон", type: "base" },
-{ src: "11.png", name: "Креветки Васаби", type: "base" },
-{ src: "12.png", name: "Мисо Суп", type: "base" },
-{ src: "13.png", name: "Гедза", type: "base" },
-{ src: "14.png", name: "Ролл Калифорния", type: "base" },
-{ src: "15.png", name: "Курица Кунг Пао", type: "base" },
-{ src: "16.png", name: "Салат Чука", type: "base" },
-{ src: "17.png", name: "Бао с рваной свининой", type: "base" },
-{ src: "18.png", name: "Жареный рис", type: "base" },
-{ src: "19.png", name: "Том Кха", type: "base" },
-{ src: "20.png", name: "Манго стики райс", type: "base" },
-            // Впишите сюда остальные файлы
+            { src: "6.png", name: "Битые огурцы", type: "base" },
+            { src: "7.png", name: "Утка по пекински", type: "base" },
+            { src: "8.png", name: "Поке с лососем", type: "base" },
+            { src: "9.png", name: "Спринг Роллы", type: "base" },
+            { src: "10.png", name: "Лапша Удон", type: "base" },
+            { src: "11.png", name: "Креветки Васаби", type: "base" },
+            { src: "12.png", name: "Мисо Суп", type: "base" },
+            { src: "13.png", name: "Гедза", type: "base" },
+            { src: "14.png", name: "Ролл Калифорния", type: "base" },
+            { src: "15.png", name: "Курица Кунг Пао", type: "base" },
+            { src: "16.png", name: "Салат Чука", type: "base" },
+            { src: "17.png", name: "Бао с рваной свининой", type: "base" },
+            { src: "18.png", name: "Жареный рис", type: "base" },
+            { src: "19.png", name: "Том Кха", type: "base" },
+            { src: "20.png", name: "Манго стики райс", type: "base" },
             { src: "povtor.png", name: "Повтори предыдущий заказ!", type: "fun" },
-{ src: "secret.png", name: "Секретное блюдо", type: "fun" },
-{ src: "sheff.png", name: "Шеф рекомендует", type: "fun" },
-{ src: "sosed.png", name: "Угощаешь соседа", type: "fun" },
-{ src: "vubor.png", name: "Выбор официанта", type: "fun" },
+            { src: "secret.png", name: "Секретное блюдо", type: "fun" },
+            { src: "sheff.png", name: "Шеф рекомендует", type: "fun" },
+            { src: "sosed.png", name: "Угощаешь соседа", type: "fun" },
+            { src: "vubor.png", name: "Выбор официанта", type: "fun" },
             { src: "joker.png", name: "ДЖОКЕР: Спец-подача!", type: "joker" }
         ];
 
+        // ИСПРАВЛЕНИЕ: Разбиваем на группы по типам
+        const margins = myItems.filter(item => item.type === "margin");
+        const bases = myItems.filter(item => item.type === "base");
+        const funs = myItems.filter(item => item.type === "fun");
+        const jokers = myItems.filter(item => item.type === "joker");
+
+        // Функция для выбора случайного элемента из массива
+        const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
         let frames = [];
         
-        // Математика генерации таймлайна
-        for(let i=0; i<100; i++) frames.push(myItems.find(item => item.type === "margin") || myItems[0]);
-        for(let i=0; i<70; i++) frames.push(myItems.find(item => item.type === "base") || myItems[0]);
-        for(let i=0; i<29; i++) frames.push(myItems.find(item => item.type === "fun") || myItems[0]);
-        frames.push(myItems.find(item => item.type === "joker") || myItems[0]);
+        // Математика генерации таймлайна (теперь берет случайные из нужной группы)
+        // Если вдруг в группе пусто, подстраховываемся первым элементом myItems
+        for(let i=0; i<100; i++) frames.push(margins.length > 0 ? getRandom(margins) : myItems[0]);
+        for(let i=0; i<70; i++) frames.push(bases.length > 0 ? getRandom(bases) : myItems[0]);
+        for(let i=0; i<29; i++) frames.push(funs.length > 0 ? getRandom(funs) : myItems[0]);
+        frames.push(jokers.length > 0 ? jokers[0] : myItems[0]);
 
         frames.sort(() => Math.random() - 0.5);
 
@@ -131,7 +139,6 @@
 
         function changeFrame() {
             if (!isRunning) return;
-            // Меняем ТОЛЬКО источник картинки
             imageElement.src = frames[currentIndex].src;
             currentIndex++;
             if (currentIndex >= frames.length) currentIndex = 0;
@@ -146,7 +153,6 @@
             const winner = frames[currentIndex === 0 ? frames.length - 1 : currentIndex - 1];
             tg.HapticFeedback.notificationOccurred('success');
 
-            // Передаем данные в Python-бота
             setTimeout(() => {
                 tg.sendData(JSON.stringify({
                     result_name: winner.name,
