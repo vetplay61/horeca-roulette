@@ -52,7 +52,6 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Инициализация звуков
         const spinSound = new Audio('spin.mp3');
         const winSound = new Audio('win.mp3');
         spinSound.loop = true;
@@ -62,7 +61,6 @@
         const urlParams = new URLSearchParams(window.location.search);
         const restId = urlParams.get('rest_id') || '1';
 
-        // Загружаем JSON с меню и настройками
         fetch(`menu_${restId}.json`)
             .then(response => {
                 if (!response.ok) throw new Error("Меню не найдено");
@@ -70,7 +68,6 @@
             })
             .then(data => {
                 
-                // Достаем структуру из JSON
                 const myItems = data.menu;
                 const schedule = data.schedule;
 
@@ -92,7 +89,6 @@
 
                 let frames = [];
 
-                // Жесткая сборка 200 кадров (Зебра)
                 for (let i = 0; i < 200; i++) {
                     if (i === 125 && jokers.length > 0) {
                         frames.push(jokers[0]);
@@ -171,12 +167,13 @@
                     const winner = frames[currentIndex === 0 ? frames.length - 1 : currentIndex - 1];
                     tg.HapticFeedback.notificationOccurred('success');
 
-                    // Отправляем блюдо и график работы в Telegram
                     setTimeout(() => {
                         tg.sendData(JSON.stringify({
                             result_name: winner.name,
                             result_type: winner.type,
                             result_src: winner.src,
+                            // НОВОЕ: Передаем цену (если ее нет в JSON, передаст 0)
+                            result_price: winner.price || 0,
                             work_start: schedule.start,
                             work_end: schedule.end,
                             tz_offset: schedule.tz_offset
