@@ -9,110 +9,150 @@
         body {
             margin: 0;
             padding: 0;
-            background-color: #1a1a1a;
-            color: white;
+            background-color: #111;
             font-family: Arial, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            overflow: hidden;
-            /* Убираем выделение текста при быстрых тапах */
-            user-select: none;
-            -webkit-user-select: none;
+            color: white;
         }
         #roulette-container {
             width: 100%;
             height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            position: relative;
+            display: none; /* Скрыто до конца загрузки */
+        }
+        /* Картинка на 100% экрана */
+        #roulette-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; 
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        #loader {
             text-align: center;
-            transition: background-color 0.1s;
-        }
-        h1 {
-            font-size: 32px;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-        p {
-            font-size: 18px;
-            opacity: 0.8;
+            font-size: 20px;
+            z-index: 10;
         }
     </style>
 </head>
 <body>
 
+    <div id="loader">Загружаем сочные кадры...<br><span id="progress">0</span>%</div>
+
     <div id="roulette-container">
-        <h1 id="item-name">Загрузка...</h1>
-        <p id="instruction">Жми на экран, чтобы поймать!</p>
+        <img id="roulette-image" src="" alt="food">
     </div>
 
     <script>
-        // Инициализируем Telegram Web App
         const tg = window.Telegram.WebApp;
-        tg.expand(); // Разворачиваем на весь экран
+        tg.expand();
 
-        // Массив нашей рулетки (200 кадров по вашей математике)
+        // Массив данных остается: скрипту нужны name и type для отправки в бота
+        const myItems = [
+            { src: "1.png", name: "Том ЯМ", type: "base" },
+            { src: "2.png", name: "Ролл Филадельфия", type: "base" },
+            { src: "3.png", name: "Димсамы", type: "base" },
+{ src: "set.png", name: "Сет роллов", type: "margin" },
+            { src: "4.png", name: "Пад Тай", type: "base" },
+            { src: "5.png", name: "Фо Бо", type: "base" },
+	    { src: "6.png", name: "Битые огурцы", type: "base" },
+{ src: "7.png", name: "Утка по пекински", type: "base" },
+{ src: "8.png", name: "Поке с лососем", type: "base" },
+{ src: "9.png", name: "Спринг Роллы", type: "base" },
+{ src: "10.png", name: "Лапша Удон", type: "base" },
+{ src: "11.png", name: "Креветки Васаби", type: "base" },
+{ src: "12.png", name: "Мисо Суп", type: "base" },
+{ src: "13.png", name: "Гедза", type: "base" },
+{ src: "14.png", name: "Ролл Калифорния", type: "base" },
+{ src: "15.png", name: "Курица Кунг Пао", type: "base" },
+{ src: "16.png", name: "Салат Чука", type: "base" },
+{ src: "17.png", name: "Бао с рваной свининой", type: "base" },
+{ src: "18.png", name: "Жареный рис", type: "base" },
+{ src: "19.png", name: "Том Кха", type: "base" },
+{ src: "20.png", name: "Манго стики райс", type: "base" },
+            // Впишите сюда остальные файлы
+            { src: "povtor.png", name: "Повтори предыдущий заказ!", type: "fun" },
+{ src: "secret.png", name: "Секретное блюдо", type: "fun" },
+{ src: "sheff.png", name: "Шеф рекомендует", type: "fun" },
+{ src: "sosed.png", name: "Угощаешь соседа", type: "fun" },
+{ src: "vubor.png", name: "Выбор официанта", type: "fun" },
+            { src: "joker.png", name: "ДЖОКЕР: Спец-подача!", type: "joker" }
+        ];
+
         let frames = [];
         
-        // Генерируем таймлайн (упрощенная склейка для MVP)
-        for(let i=0; i<100; i++) frames.push({name: "Сет / Высокая маржа", color: "#FF5733", type: "margin"});
-        for(let i=0; i<70; i++) frames.push({name: "Обычное блюдо", color: "#3399FF", type: "base"});
-        for(let i=0; i<16; i++) frames.push({name: "Шеф рекомендует", color: "#9933FF", type: "sales"});
-        for(let i=0; i<13; i++) frames.push({name: "Угощаешь соседа!", color: "#FF3399", type: "fun"});
-        frames.push({name: "ДЖОКЕР: Спец-подача!", color: "#FFD700", type: "joker"}); // Строго 1
+        // Математика генерации таймлайна
+        for(let i=0; i<100; i++) frames.push(myItems.find(item => item.type === "margin") || myItems[0]);
+        for(let i=0; i<70; i++) frames.push(myItems.find(item => item.type === "base") || myItems[0]);
+        for(let i=0; i<29; i++) frames.push(myItems.find(item => item.type === "fun") || myItems[0]);
+        frames.push(myItems.find(item => item.type === "joker") || myItems[0]);
 
-        // Перемешиваем массив, чтобы не шли подряд
         frames.sort(() => Math.random() - 0.5);
 
+        // Прелоадер картинок
+        let loadedImagesCount = 0;
+        const totalImages = myItems.length;
+
+        myItems.forEach((item) => {
+            const img = new Image();
+            img.src = item.src;
+            img.onload = () => {
+                loadedImagesCount++;
+                document.getElementById('progress').innerText = Math.round((loadedImagesCount / totalImages) * 100);
+                if (loadedImagesCount === totalImages) startRoulette();
+            };
+            img.onerror = () => {
+                loadedImagesCount++;
+                if (loadedImagesCount === totalImages) startRoulette();
+            }
+        });
+
         let currentIndex = 0;
-        let isRunning = true;
+        let isRunning = false;
         let intervalId;
 
+        const loader = document.getElementById('loader');
         const container = document.getElementById('roulette-container');
-        const nameElement = document.getElementById('item-name');
-        const instruction = document.getElementById('instruction');
+        const imageElement = document.getElementById('roulette-image');
 
-        // Функция смены кадров
-        function changeFrame() {
-            if (!isRunning) return;
-            
-            const frame = frames[currentIndex];
-            container.style.backgroundColor = frame.color;
-            nameElement.innerText = frame.name;
-
-            currentIndex++;
-            if (currentIndex >= frames.length) currentIndex = 0; // Зацикливаем
+        function startRoulette() {
+            loader.style.display = 'none';
+            container.style.display = 'block';
+            isRunning = true;
+            intervalId = setInterval(changeFrame, 150);
         }
 
-        // Запускаем карусель со скоростью 150 мс (0.15 сек)
-        intervalId = setInterval(changeFrame, 150);
+        function changeFrame() {
+            if (!isRunning) return;
+            // Меняем ТОЛЬКО источник картинки
+            imageElement.src = frames[currentIndex].src;
+            currentIndex++;
+            if (currentIndex >= frames.length) currentIndex = 0;
+        }
 
-        // Обработка тапа по экрану
         document.body.addEventListener('click', function() {
-            if (!isRunning) return; // Если уже остановили - ничего не делаем
+            if (!isRunning) return;
             
             isRunning = false;
             clearInterval(intervalId);
             
-            // Получаем то, что выпало
             const winner = frames[currentIndex === 0 ? frames.length - 1 : currentIndex - 1];
-            
-            instruction.innerText = "Отправляем результат...";
-            
-            // Вибрация телефона для обратной связи
             tg.HapticFeedback.notificationOccurred('success');
 
-            // Отправляем данные обратно в Python-бота
-            // sendData работает только если Web App открыт с обычной клавиатуры (ReplyKeyboardMarkup)
+            // Передаем данные в Python-бота
             setTimeout(() => {
                 tg.sendData(JSON.stringify({
                     result_name: winner.name,
                     result_type: winner.type
                 }));
-            }, 1000); // Пауза 1 сек, чтобы гость осознал победу
+            }, 1000);
         });
     </script>
 </body>
