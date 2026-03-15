@@ -49,151 +49,129 @@
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
+       const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // ИНИЦИАЛИЗАЦИЯ АУДИО
-        const spinSound = new Audio('spin.mp3'); // Ваш звук волчка
-        const winSound = new Audio('win.mp3');   // Победный звук
-
-        // Настройки звука волчка
-        spinSound.loop = true; // Зацикливаем звук, чтобы он играл бесконечно
-        spinSound.volume = 0.6; // Громкость (от 0.0 до 1.0)
+        const spinSound = new Audio('spin.mp3');
+        const winSound = new Audio('win.mp3');
+        spinSound.loop = true;
+        spinSound.volume = 0.6;
         winSound.volume = 1.0;
 
-        const myItems = [
-            { src: "1.png", name: "Том ЯМ", type: "base" },
-            { src: "2.png", name: "Ролл Филадельфия", type: "base" },
-            { src: "3.png", name: "Димсамы", type: "base" },
-            { src: "set.png", name: "Сет роллов", type: "margin" },
-            { src: "4.png", name: "Пад Тай", type: "base" },
-            { src: "5.png", name: "Фо Бо", type: "base" },
-            { src: "6.png", name: "Битые огурцы", type: "base" },
-            { src: "7.png", name: "Утка по пекински", type: "base" },
-            { src: "8.png", name: "Поке с лососем", type: "base" },
-            { src: "9.png", name: "Спринг Роллы", type: "base" },
-            { src: "10.png", name: "Лапша Удон", type: "base" },
-            { src: "11.png", name: "Креветки Васаби", type: "base" },
-            { src: "12.png", name: "Мисо Суп", type: "base" },
-            { src: "13.png", name: "Гедза", type: "base" },
-            { src: "14.png", name: "Ролл Калифорния", type: "base" },
-            { src: "15.png", name: "Курица Кунг Пао", type: "base" },
-            { src: "16.png", name: "Салат Чука", type: "base" },
-            { src: "17.png", name: "Бао с рваной свининой", type: "base" },
-            { src: "18.png", name: "Жареный рис", type: "base" },
-            { src: "19.png", name: "Том Кха", type: "base" },
-            { src: "20.png", name: "Манго стики райс", type: "base" },
-            { src: "povtor.png", name: "Повтори предыдущий заказ!", type: "fun" },
-            { src: "secret.png", name: "Секретное блюдо", type: "fun" },
-            { src: "sheff.png", name: "Шеф рекомендует", type: "fun" },
-            { src: "sosed.png", name: "Угощаешь соседа", type: "fun" },
-            { src: "vubor.png", name: "Выбор официанта", type: "fun" },
-            { src: "joker.png", name: "ДЖОКЕР: Спец-подача!", type: "joker" }
-        ];
+        // 1. Читаем ID ресторана из ссылки (например: ?rest_id=1)
+        const urlParams = new URLSearchParams(window.location.search);
+        // Если ID не передали, по умолчанию грузим заведение "1"
+        const restId = urlParams.get('rest_id') || '1'; 
 
-        const margins = myItems.filter(item => item.type === "margin");
-        const bases = myItems.filter(item => item.type === "base");
-        const funs = myItems.filter(item => item.type === "fun");
-        const jokers = myItems.filter(item => item.type === "joker");
-        const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+        // 2. Скачиваем нужный JSON-файл с меню
+        fetch(`menu_${restId}.json`)
+            .then(response => {
+                if (!response.ok) throw new Error("Меню не найдено");
+                return response.json(); // Превращаем текст в массив
+            })
+            .then(myItems => {
+                // ВЕСЬ КОД РУЛЕТКИ ТЕПЕРЬ ВНУТРИ ЭТОГО БЛОКА, 
+                // ОН ЗАПУСТИТСЯ ТОЛЬКО ПОСЛЕ ЗАГРУЗКИ ДАННЫХ
 
-        let frames = [];
-        for(let i=0; i<100; i++) frames.push(margins.length > 0 ? getRandom(margins) : myItems[0]);
-        for(let i=0; i<70; i++) frames.push(bases.length > 0 ? getRandom(bases) : myItems[0]);
-        for(let i=0; i<29; i++) frames.push(funs.length > 0 ? getRandom(funs) : myItems[0]);
-        frames.push(jokers.length > 0 ? jokers[0] : myItems[0]);
+                const margins = myItems.filter(item => item.type === "margin");
+                const bases = myItems.filter(item => item.type === "base");
+                const funs = myItems.filter(item => item.type === "fun");
+                const jokers = myItems.filter(item => item.type === "joker");
+                const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-        frames.sort(() => Math.random() - 0.5);
+                let frames = [];
+                for(let i=0; i<100; i++) frames.push(margins.length > 0 ? getRandom(margins) : myItems[0]);
+                for(let i=0; i<70; i++) frames.push(bases.length > 0 ? getRandom(bases) : myItems[0]);
+                for(let i=0; i<29; i++) frames.push(funs.length > 0 ? getRandom(funs) : myItems[0]);
+                frames.push(jokers.length > 0 ? jokers[0] : myItems[0]);
 
-        for (let i = 1; i < frames.length - 1; i++) {
-            if (frames[i].src === frames[i - 1].src) {
-                for (let j = i + 1; j < frames.length; j++) {
-                    if (frames[j].src !== frames[i].src && frames[j].src !== frames[i - 1].src) {
-                        let temp = frames[i]; frames[i] = frames[j]; frames[j] = temp; break;
+                frames.sort(() => Math.random() - 0.5);
+
+                for (let i = 1; i < frames.length - 1; i++) {
+                    if (frames[i].src === frames[i - 1].src) {
+                        for (let j = i + 1; j < frames.length; j++) {
+                            if (frames[j].src !== frames[i].src && frames[j].src !== frames[i - 1].src) {
+                                let temp = frames[i]; frames[i] = frames[j]; frames[j] = temp; break;
+                            }
+                        }
                     }
                 }
-            }
-        }
 
-        let loadedImagesCount = 0;
-        const totalImages = myItems.length;
+                let loadedImagesCount = 0;
+                const totalImages = myItems.length;
 
-        myItems.forEach((item) => {
-            const img = new Image();
-            img.src = item.src;
-            img.onload = () => {
-                loadedImagesCount++;
-                document.getElementById('progress').innerText = Math.round((loadedImagesCount / totalImages) * 100);
-                if (loadedImagesCount === totalImages) showStartScreen();
-            };
-            img.onerror = () => {
-                loadedImagesCount++;
-                if (loadedImagesCount === totalImages) showStartScreen();
-            }
-        });
+                // Прелоадер картинок
+                myItems.forEach((item) => {
+                    const img = new Image();
+                    img.src = item.src;
+                    img.onload = () => {
+                        loadedImagesCount++;
+                        document.getElementById('progress').innerText = Math.round((loadedImagesCount / totalImages) * 100);
+                        if (loadedImagesCount === totalImages) showStartScreen();
+                    };
+                    img.onerror = () => {
+                        loadedImagesCount++;
+                        if (loadedImagesCount === totalImages) showStartScreen();
+                    }
+                });
 
-        let currentIndex = 0;
-        let isRunning = false;
-        let intervalId;
+                let currentIndex = 0;
+                let isRunning = false;
+                let intervalId;
 
-        const loader = document.getElementById('loader');
-        const startScreen = document.getElementById('start-screen');
-        const container = document.getElementById('roulette-container');
-        const imageElement = document.getElementById('roulette-image');
+                const loader = document.getElementById('loader');
+                const startScreen = document.getElementById('start-screen');
+                const container = document.getElementById('roulette-container');
+                const imageElement = document.getElementById('roulette-image');
 
-        function showStartScreen() {
-            loader.style.display = 'none';
-            startScreen.style.display = 'flex';
-        }
+                function showStartScreen() {
+                    loader.style.display = 'none';
+                    startScreen.style.display = 'flex';
+                }
 
-        // КЛИК ДЛЯ СТАРТА
-        startScreen.addEventListener('click', function() {
-            startScreen.style.display = 'none';
-            container.style.display = 'block';
-            
-            // "Прогреваем" звуки для мобильных браузеров
-            spinSound.play().catch(()=>{}); spinSound.pause(); spinSound.currentTime = 0;
-            winSound.play().catch(()=>{}); winSound.pause(); winSound.currentTime = 0;
+                startScreen.addEventListener('click', function() {
+                    startScreen.style.display = 'none';
+                    container.style.display = 'block';
+                    
+                    spinSound.play().catch(()=>{}); spinSound.pause(); spinSound.currentTime = 0;
+                    winSound.play().catch(()=>{}); winSound.pause(); winSound.currentTime = 0;
 
-            // ЗАПУСКАЕМ ФОНОВЫЙ ВОЛЧОК
-            spinSound.play().catch(()=>{});
+                    spinSound.play().catch(()=>{});
+                    isRunning = true;
+                    intervalId = setInterval(changeFrame, 150);
+                });
 
-            isRunning = true;
-            intervalId = setInterval(changeFrame, 150);
-        });
+                function changeFrame() {
+                    if (!isRunning) return;
+                    imageElement.src = frames[currentIndex].src;
+                    currentIndex++;
+                    if (currentIndex >= frames.length) currentIndex = 0;
+                }
 
-        function changeFrame() {
-            if (!isRunning) return;
-            imageElement.src = frames[currentIndex].src;
-            currentIndex++;
-            if (currentIndex >= frames.length) currentIndex = 0;
-        }
+                container.addEventListener('click', function() {
+                    if (!isRunning) return;
+                    
+                    isRunning = false;
+                    clearInterval(intervalId);
+                    spinSound.pause();
+                    winSound.play().catch(()=>{});
+                    
+                    const winner = frames[currentIndex === 0 ? frames.length - 1 : currentIndex - 1];
+                    tg.HapticFeedback.notificationOccurred('success');
 
-        // КЛИК ДЛЯ ОСТАНОВКИ
-        container.addEventListener('click', function() {
-            if (!isRunning) return;
-            
-            isRunning = false;
-            clearInterval(intervalId);
-            
-            // ОСТАНАВЛИВАЕМ ВОЛЧОК
-            spinSound.pause();
-            
-            // ЗАПУСКАЕМ ПОБЕДНЫЙ ЗВУК
-            winSound.play().catch(()=>{});
-            
-            const winner = frames[currentIndex === 0 ? frames.length - 1 : currentIndex - 1];
-            tg.HapticFeedback.notificationOccurred('success');
-
-            // Пауза перед закрытием (даем дослушать победный звук)
-            setTimeout(() => {
-                tg.sendData(JSON.stringify({
-                    result_name: winner.name,
-                    result_type: winner.type,
-                    result_src: winner.src
-                }));
-            }, 1200); // Немного увеличил задержку закрытия для эффекта победы
-        });
+                    setTimeout(() => {
+                        tg.sendData(JSON.stringify({
+                            result_name: winner.name,
+                            result_type: winner.type,
+                            result_src: winner.src
+                        }));
+                    }, 1200);
+                });
+            })
+            .catch(error => {
+                // Если передали неверный ID или файл не найден
+                document.getElementById('loader').innerHTML = "Ошибка загрузки меню 😔<br>Проверьте ссылку.";
+            });
     </script>
 </body>
 </html>
