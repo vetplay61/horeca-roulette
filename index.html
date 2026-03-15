@@ -59,27 +59,28 @@
         spinSound.volume = 0.6;
         winSound.volume = 1.0;
 
-        // Получаем ID заведения из ссылки (по умолчанию 1)
         const urlParams = new URLSearchParams(window.location.search);
         const restId = urlParams.get('rest_id') || '1';
 
-        // Загружаем JSON с меню
+        // Загружаем JSON с меню и настройками
         fetch(`menu_${restId}.json`)
             .then(response => {
                 if (!response.ok) throw new Error("Меню не найдено");
                 return response.json();
             })
-            .then(myItems => {
+            .then(data => {
                 
-                // Фильтруем по категориям
+                // Достаем структуру из JSON
+                const myItems = data.menu;
+                const schedule = data.schedule;
+
                 const margins = myItems.filter(item => item.type === "margin");
                 const bases = myItems.filter(item => item.type === "base");
                 const funs = myItems.filter(item => item.type === "fun");
                 const jokers = myItems.filter(item => item.type === "joker");
 
-                // Функция строгого перебора карточек (без рандома)
                 const getNext = (arr, counter) => {
-                    if (arr.length === 0) return myItems[0]; // Защита от пустой категории
+                    if (arr.length === 0) return myItems[0];
                     const item = arr[counter.val % arr.length];
                     counter.val++;
                     return item;
@@ -91,30 +92,23 @@
 
                 let frames = [];
 
-                // Жесткая сборка 200 кадров (Идеальная зебра)
+                // Жесткая сборка 200 кадров (Зебра)
                 for (let i = 0; i < 200; i++) {
-                    // 1. Джокер на 125-м кадре (18.7 сек)
                     if (i === 125 && jokers.length > 0) {
                         frames.push(jokers[0]);
                         continue;
                     }
-                    // 2. Высокая маржа: все четные кадры
                     if (i % 2 === 0) {
                         frames.push(getNext(margins, mCount));
-                    } 
-                    // 3. База и Фан: нечетные кадры
-                    else {
-                        // Фан каждый 3-й нечетный кадр
+                    } else {
                         if (i % 6 === 3) {
                             frames.push(getNext(funs, fCount));
                         } else {
-                            // Обычная база
                             frames.push(getNext(bases, bCount));
                         }
                     }
                 }
 
-                // Прелоадер картинок
                 let loadedImagesCount = 0;
                 const totalImages = myItems.length;
 
@@ -150,7 +144,6 @@
                     startScreen.style.display = 'none';
                     container.style.display = 'block';
                     
-                    // Прогрев звуков
                     spinSound.play().catch(()=>{}); spinSound.pause(); spinSound.currentTime = 0;
                     winSound.play().catch(()=>{}); winSound.pause(); winSound.currentTime = 0;
 
@@ -163,7 +156,6 @@
                     if (!isRunning) return;
                     imageElement.src = frames[currentIndex].src;
                     currentIndex++;
-                    // Зацикливаем видео, если гость не нажал до конца
                     if (currentIndex >= frames.length) currentIndex = 0;
                 }
 
@@ -179,12 +171,15 @@
                     const winner = frames[currentIndex === 0 ? frames.length - 1 : currentIndex - 1];
                     tg.HapticFeedback.notificationOccurred('success');
 
-                    // Отправляем результат в Python (с паузой для победного звука)
+                    // Отправляем блюдо и график работы в Telegram
                     setTimeout(() => {
                         tg.sendData(JSON.stringify({
                             result_name: winner.name,
                             result_type: winner.type,
-                            result_src: winner.src
+                            result_src: winner.src,
+                            work_start: schedule.start,
+                            work_end: schedule.end,
+                            tz_offset: schedule.tz_offset
                         }));
                     }, 1200);
                 });
