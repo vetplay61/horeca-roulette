@@ -1,5 +1,11 @@
-[
-    { "src": "01.png", "name": "NEW YORK SOUR", "type": "base" },
+{
+  "schedule": {
+    "start": "10:00",
+    "end": "23:00",
+    "tz_offset": 3
+  },
+  "menu": [
+     { "src": "01.png", "name": "NEW YORK SOUR", "type": "base" },
     { "src": "02.png", "name": "TEQUILA SUNRISE", "type": "base" },
     { "src": "03.png", "name": "EMPRESS GIN & TONIC", "type": "base" },
     { "src": "setsh.png", "name": "SET SHOTS", "type": "margin" },
@@ -26,4 +32,5 @@
     { "src": "sosed.png", "name": "Угощаешь соседа", "type": "fun" },
     { "src": "vubor.png", "name": "Выбор официанта", "type": "fun" },
     { "src": "joker.png", "name": "ДЖОКЕР: Спец-подача!", "type": "joker" }
-]
+  ]
+}
