@@ -29,8 +29,7 @@
         #roulette-image {
             width: 100%;
             height: 100%;
-            /* ИСПРАВЛЕНИЕ: contain покажет картинку целиком без обрезки */
-            object-fit: contain; 
+            object-fit: contain; /* Картинка не обрезается */
             position: absolute;
             top: 0;
             left: 0;
@@ -84,25 +83,37 @@
             { src: "joker.png", name: "ДЖОКЕР: Спец-подача!", type: "joker" }
         ];
 
-        // ИСПРАВЛЕНИЕ: Разбиваем на группы по типам
+        // Группировка для равномерного распределения
         const margins = myItems.filter(item => item.type === "margin");
         const bases = myItems.filter(item => item.type === "base");
         const funs = myItems.filter(item => item.type === "fun");
         const jokers = myItems.filter(item => item.type === "joker");
 
-        // Функция для выбора случайного элемента из массива
         const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
         let frames = [];
         
-        // Математика генерации таймлайна (теперь берет случайные из нужной группы)
-        // Если вдруг в группе пусто, подстраховываемся первым элементом myItems
+        // Сборка таймлайна
         for(let i=0; i<100; i++) frames.push(margins.length > 0 ? getRandom(margins) : myItems[0]);
         for(let i=0; i<70; i++) frames.push(bases.length > 0 ? getRandom(bases) : myItems[0]);
         for(let i=0; i<29; i++) frames.push(funs.length > 0 ? getRandom(funs) : myItems[0]);
         frames.push(jokers.length > 0 ? jokers[0] : myItems[0]);
 
         frames.sort(() => Math.random() - 0.5);
+
+        // Устранение "залипаний" (подряд идущих одинаковых картинок)
+        for (let i = 1; i < frames.length - 1; i++) {
+            if (frames[i].src === frames[i - 1].src) {
+                for (let j = i + 1; j < frames.length; j++) {
+                    if (frames[j].src !== frames[i].src && frames[j].src !== frames[i - 1].src) {
+                        let temp = frames[i];
+                        frames[i] = frames[j];
+                        frames[j] = temp;
+                        break;
+                    }
+                }
+            }
+        }
 
         // Прелоадер картинок
         let loadedImagesCount = 0;
@@ -153,10 +164,12 @@
             const winner = frames[currentIndex === 0 ? frames.length - 1 : currentIndex - 1];
             tg.HapticFeedback.notificationOccurred('success');
 
+            // Отправляем данные в бота
             setTimeout(() => {
                 tg.sendData(JSON.stringify({
                     result_name: winner.name,
-                    result_type: winner.type
+                    result_type: winner.type,
+                    result_src: winner.src
                 }));
             }, 1000);
         });
