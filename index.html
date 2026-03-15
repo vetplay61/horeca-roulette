@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Фуд-рулетка</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a1a;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            /* Убираем выделение текста при быстрых тапах */
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        #roulette-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            transition: background-color 0.1s;
+        }
+        h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        p {
+            font-size: 18px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="roulette-container">
+        <h1 id="item-name">Загрузка...</h1>
+        <p id="instruction">Жми на экран, чтобы поймать!</p>
+    </div>
+
+    <script>
+        // Инициализируем Telegram Web App
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // Разворачиваем на весь экран
+
+        // Массив нашей рулетки (200 кадров по вашей математике)
+        let frames = [];
+        
+        // Генерируем таймлайн (упрощенная склейка для MVP)
+        for(let i=0; i<100; i++) frames.push({name: "Сет / Высокая маржа", color: "#FF5733", type: "margin"});
+        for(let i=0; i<70; i++) frames.push({name: "Обычное блюдо", color: "#3399FF", type: "base"});
+        for(let i=0; i<16; i++) frames.push({name: "Шеф рекомендует", color: "#9933FF", type: "sales"});
+        for(let i=0; i<13; i++) frames.push({name: "Угощаешь соседа!", color: "#FF3399", type: "fun"});
+        frames.push({name: "ДЖОКЕР: Спец-подача!", color: "#FFD700", type: "joker"}); // Строго 1
+
+        // Перемешиваем массив, чтобы не шли подряд
+        frames.sort(() => Math.random() - 0.5);
+
+        let currentIndex = 0;
+        let isRunning = true;
+        let intervalId;
+
+        const container = document.getElementById('roulette-container');
+        const nameElement = document.getElementById('item-name');
+        const instruction = document.getElementById('instruction');
+
+        // Функция смены кадров
+        function changeFrame() {
+            if (!isRunning) return;
+            
+            const frame = frames[currentIndex];
+            container.style.backgroundColor = frame.color;
+            nameElement.innerText = frame.name;
+
+            currentIndex++;
+            if (currentIndex >= frames.length) currentIndex = 0; // Зацикливаем
+        }
+
+        // Запускаем карусель со скоростью 150 мс (0.15 сек)
+        intervalId = setInterval(changeFrame, 150);
+
+        // Обработка тапа по экрану
+        document.body.addEventListener('click', function() {
+            if (!isRunning) return; // Если уже остановили - ничего не делаем
+            
+            isRunning = false;
+            clearInterval(intervalId);
+            
+            // Получаем то, что выпало
+            const winner = frames[currentIndex === 0 ? frames.length - 1 : currentIndex - 1];
+            
+            instruction.innerText = "Отправляем результат...";
+            
+            // Вибрация телефона для обратной связи
+            tg.HapticFeedback.notificationOccurred('success');
+
+            // Отправляем данные обратно в Python-бота
+            // sendData работает только если Web App открыт с обычной клавиатуры (ReplyKeyboardMarkup)
+            setTimeout(() => {
+                tg.sendData(JSON.stringify({
+                    result_name: winner.name,
+                    result_type: winner.type
+                }));
+            }, 1000); // Пауза 1 сек, чтобы гость осознал победу
+        });
+    </script>
+</body>
+</html>
